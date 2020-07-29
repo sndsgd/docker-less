@@ -1,7 +1,7 @@
 CWD := $(shell pwd)
 
-NODE_VERSION ?= 12.17.0-r0
-LESS_VERSION ?= 3.11.3
+NODE_VERSION ?= 12.18.3-r0
+LESS_VERSION ?= 3.12.2
 
 IMAGE_NAME ?= sndsgd/less
 IMAGE := $(IMAGE_NAME):$(LESS_VERSION)
@@ -23,3 +23,7 @@ build: build-image
 .PHONY: help
 help: build-image
 	docker run --rm $(IMAGE) --help
+
+.PHONY: version
+version: build-image
+	docker run --rm $(IMAGE) --version
