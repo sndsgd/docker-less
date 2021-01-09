@@ -1,7 +1,7 @@
 CWD := $(shell pwd)
 
-NODE_VERSION ?= 12.18.3-r0
-LESS_VERSION ?= 3.12.2
+NODE_VERSION ?= 12.20.1-r0
+LESS_VERSION ?= 4.0.0
 
 IMAGE_NAME ?= sndsgd/less
 IMAGE := $(IMAGE_NAME):$(LESS_VERSION)
