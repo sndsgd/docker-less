@@ -17,7 +17,7 @@ VERSION_PATTERN ?= '(?<="latest":")[^"]+(?=")'
 ensure-version:
 ifeq ($(LESS_VERSION),)
 	$(info fetching latest version...)
-	@$(eval LESS_VERSION = $(shell curl -s $(VERSION_URL) | grep -Po $(VERSION_PATTERN)))
+	@$(eval LESS_VERSION = $(shell curl -s $(VERSION_URL) | grep -Po $(VERSION_PATTERN) | head -1))
 endif
 	@$(eval IMAGE := $(IMAGE_NAME):$(LESS_VERSION))
 
