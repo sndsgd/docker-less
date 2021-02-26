@@ -1,6 +1,7 @@
 CWD := $(shell pwd)
 
-NODE_VERSION ?= 12.21.0-r0
+ALPINE_VERSION ?= 3.13
+NODE_VERSION ?=
 LESS_VERSION ?=
 
 IMAGE_NAME ?= sndsgd/less
@@ -10,6 +11,15 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[33m%s\033[0m~%s\n", $$1, $$2}' \
 	| column -s "~" -t
+
+NODE_VERSION_URL ?= 'https://pkgs.alpinelinux.org/packages?name=nodejs&branch=v$(ALPINE_VERSION)'
+NODE_VERSION_PATTERN ?= '(?<=<td class="version">)[^<]+(?=<)'
+.PHONY: ensure-node-version
+ensure-node-version:
+ifeq ($(NODE_VERSION),)
+	$(info fetching node package version...)
+	$(eval NODE_VERSION = $(shell curl -s $(NODE_VERSION_URL) | grep -Po $(NODE_VERSION_PATTERN) | head -1))
+endif
 
 VERSION_URL ?= https://www.npmjs.com/package/less
 VERSION_PATTERN ?= '(?<="latest":")[^"]+(?=")'
@@ -24,10 +34,11 @@ endif
 IMAGE_ARGS ?= --quiet
 .PHONY: image
 image: ## Build the docker image
-image: ensure-version
+image: ensure-node-version ensure-version
 	$(info building image for less v$(LESS_VERSION)...)
 	@docker build \
 	  $(IMAGE_ARGS) \
+	  --build-arg ALPINE_VERSION=$(ALPINE_VERSION) \
 		--build-arg NODE_VERSION=$(NODE_VERSION) \
 		--build-arg LESS_VERSION=$(LESS_VERSION) \
 		--tag $(IMAGE_NAME):latest \
