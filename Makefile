@@ -4,7 +4,8 @@ ALPINE_VERSION ?= 3.13
 NODE_VERSION ?=
 LESS_VERSION ?=
 
-IMAGE_NAME ?= sndsgd/less
+NAME := sndsgd/less
+IMAGE_NAME ?= ghcr.io/$(NAME)
 
 .PHONY: help
 help:
@@ -70,12 +71,18 @@ push: test
 	docker push $(IMAGE)
 	docker push $(IMAGE_NAME):latest
 
-IMAGE_CHECK_URL = https://hub.docker.com/v2/repositories/$(IMAGE_NAME)/tags/$(LESS_VERSION)
 .PHONY: push-cron
 push-cron: ## Build and push an image if the version does not exist
-push-cron: ensure-version
-	curl --silent -f -lSL $(IMAGE_CHECK_URL) > /dev/null \
-	  || make --no-print-directory push IMAGE_ARGS=--no-cache
+push-cron: ensure-node-version ensure-version
+	@token_response="$$(curl --silent -f -lSL "https://ghcr.io/token?scope=repository:$(NAME):pull")"; \
+	token="$$(echo "$$token_response" | jq -r .token)"; \
+	json="$$(curl --silent -f -lSL -H "Authorization: Bearer $$token" https://ghcr.io/v2/$(NAME)/tags/list)"; \
+	index="$$(echo "$$json" | jq '.tags | index("$(LESS_VERSION)")')"; \
+	if [ "$$index" = "null" ]; then \
+		make --no-print-directory push LESS_VERSION=$(LESS_VERSION) NODE_VERSION=$(NODE_VERSION) IMAGE_ARGS=--no-cache; \
+	else \
+		echo "image for '$(LESS_VERSION)' already exists"; \
+	fi
 
 .PHONY: run-help
 run-help: ## Run `less --help`
