@@ -3,9 +3,11 @@ CWD := $(shell pwd)
 ALPINE_VERSION ?= 3.13
 NODE_VERSION ?=
 LESS_VERSION ?=
+FETCHED_LESS_VERSION ?=
 
 NAME := sndsgd/less
 IMAGE_NAME ?= ghcr.io/$(NAME)
+LATEST_IMAGE := $(IMAGE_NAME):latest
 
 .PHONY: help
 help:
@@ -18,8 +20,8 @@ NODE_VERSION_PATTERN ?= '(?<=<td class="version">)[^<]+(?=<)'
 .PHONY: ensure-node-version
 ensure-node-version:
 ifeq ($(NODE_VERSION),)
-	$(info fetching node package version...)
-	$(eval NODE_VERSION = $(shell curl -s $(NODE_VERSION_URL) | grep -Po $(NODE_VERSION_PATTERN) | head -1))
+	@$(info fetching node package version...)
+	@$(eval NODE_VERSION = $(shell curl -s $(NODE_VERSION_URL) | grep -Po $(NODE_VERSION_PATTERN) | head -1))
 endif
 
 VERSION_URL ?= https://www.npmjs.com/package/less
@@ -27,8 +29,9 @@ VERSION_PATTERN ?= '(?<="latest":")[^"]+(?=")'
 .PHONY: ensure-version
 ensure-version:
 ifeq ($(LESS_VERSION),)
-	$(info fetching latest version...)
+	@$(info fetching latest version...)
 	@$(eval LESS_VERSION = $(shell curl -s $(VERSION_URL) | grep -Po $(VERSION_PATTERN) | head -1))
+	@$(eval FETCHED_LESS_VERSION = $(LESS_VERSION))
 endif
 	@$(eval IMAGE := $(IMAGE_NAME):$(LESS_VERSION))
 
@@ -42,9 +45,11 @@ image: ensure-node-version ensure-version
 	  --build-arg ALPINE_VERSION=$(ALPINE_VERSION) \
 		--build-arg NODE_VERSION=$(NODE_VERSION) \
 		--build-arg LESS_VERSION=$(LESS_VERSION) \
-		--tag $(IMAGE_NAME):latest \
 		--tag $(IMAGE) \
 		$(CWD)
+ifeq ($(LESS_VERSION),$(FETCHED_LESS_VERSION))
+	@docker tag $(IMAGE) $(LATEST_IMAGE)
+endif
 
 .PHONY: test
 test: ## Test the docker image
@@ -69,7 +74,9 @@ execute-test: ensure-version
 push: ## Push the docker image
 push: test
 	docker push $(IMAGE)
-	docker push $(IMAGE_NAME):latest
+ifeq ($(LESS_VERSION),$(FETCHED_LESS_VERSION))
+	docker push $(LATEST_IMAGE)
+endif
 
 .PHONY: push-cron
 push-cron: ## Build and push an image if the version does not exist
