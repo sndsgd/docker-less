@@ -16,12 +16,13 @@ help:
 	| column -s "~" -t
 
 NODE_VERSION_URL ?= 'https://pkgs.alpinelinux.org/packages?name=nodejs&branch=v$(ALPINE_VERSION)'
-NODE_VERSION_PATTERN ?= '(?<=<td class="version">)[^<]+(?=<)'
+NODE_VERSION_PATTERN='(?<=aria-label="Package version">)[^<]+(?=</strong>)'
 .PHONY: ensure-node-version
 ensure-node-version:
 ifeq ($(NODE_VERSION),)
-	@$(info fetching node package version...)
-	@$(eval NODE_VERSION = $(shell curl -s $(NODE_VERSION_URL) | grep -Po $(NODE_VERSION_PATTERN) | head -1))
+	$(info fetching node package version...)
+	$(eval NODE_VERSION = $(shell curl -s $(NODE_VERSION_URL) | grep -Po $(NODE_VERSION_PATTERN) | head -1))
+	@echo "found version $(NODE_VERSION)"
 endif
 
 VERSION_URL ?= https://www.npmjs.com/package/less
@@ -32,6 +33,7 @@ ifeq ($(LESS_VERSION),)
 	@$(info fetching latest version...)
 	@$(eval LESS_VERSION = $(shell curl -s $(VERSION_URL) | grep -Po $(VERSION_PATTERN) | head -1))
 	@$(eval FETCHED_LESS_VERSION = $(LESS_VERSION))
+	@echo "found less version $(LESS_VERSION)"
 endif
 	@$(eval IMAGE := $(IMAGE_NAME):$(LESS_VERSION))
 
