@@ -1,6 +1,7 @@
 name: make-push-cron
 
 on:
+  workflow_dispatch:
   schedule:
   - cron: '42 */6 * * *'
 
