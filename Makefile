@@ -55,7 +55,7 @@ endif
 .PHONY: test
 test: ## Test the docker image
 test: image
-	@make --no-print-directory execute-test \
+	@$(MAKE) --no-print-directory execute-test \
 		LESS_VERSION=$(LESS_VERSION) \
 		TEST_NAME=one
 
@@ -87,7 +87,7 @@ push-cron: ensure-node-version ensure-version
 	json="$$(curl --silent -f -lSL -H "Authorization: Bearer $$token" https://ghcr.io/v2/$(NAME)/tags/list)"; \
 	index="$$(echo "$$json" | jq '.tags | index("$(LESS_VERSION)")')"; \
 	if [ "$$index" = "null" ]; then \
-		make --no-print-directory push LESS_VERSION=$(LESS_VERSION) NODE_VERSION=$(NODE_VERSION) IMAGE_ARGS=--no-cache; \
+		$(MAKE) --no-print-directory push LESS_VERSION=$(LESS_VERSION) FETCHED_LESS_VERSION=$(LESS_VERSION) NODE_VERSION=$(NODE_VERSION) IMAGE_ARGS=--no-cache; \
 	else \
 		echo "image for '$(LESS_VERSION)' already exists"; \
 	fi
