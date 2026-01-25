@@ -25,13 +25,12 @@ ifeq ($(NODE_VERSION),)
 	@echo "found version $(NODE_VERSION)"
 endif
 
-VERSION_URL ?= https://www.npmjs.com/package/less
-VERSION_PATTERN ?= '(?<="latest":")[^"]+(?=")'
+VERSION_URL ?= https://api.github.com/repos/less/less.js/releases/latest
 .PHONY: ensure-version
 ensure-version:
 ifeq ($(LESS_VERSION),)
 	@$(info fetching latest version...)
-	@$(eval LESS_VERSION = $(shell curl -s $(VERSION_URL) | grep -Po $(VERSION_PATTERN) | head -1))
+	@$(eval LESS_VERSION = $(shell curl -fsSL -H "Accept: application/vnd.github+json" $(VERSION_URL) | jq -r .tag_name | sed 's/^v//'))
 	@$(eval FETCHED_LESS_VERSION = $(LESS_VERSION))
 	@echo "found less version $(LESS_VERSION)"
 endif
